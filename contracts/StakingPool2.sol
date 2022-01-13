@@ -32,7 +32,7 @@ contract ECIOStakingPool1 is Ownable {
 
     /** Token lock time after unstaked*/
     uint256 public constant WITHDRAW_LOCK_DAY = 5;
-    uint256 public constant REWARD_RATE = 2;
+    uint256 public constant REWARD_RATE = 175 / 100;
 
     uint256 public endPool;
 
