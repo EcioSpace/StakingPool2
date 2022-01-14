@@ -32,7 +32,7 @@ contract ECIOStakingPool1 is Ownable {
 
     /** Token lock time after unstaked*/
     uint256 public constant WITHDRAW_LOCK_DAY = 5;
-    uint256 public constant REWARD_RATE = 175 / 100;
+    uint256 public constant REWARD_RATE = 175;
 
     uint256 public endPool;
 
@@ -172,14 +172,14 @@ contract ECIOStakingPool1 is Ownable {
             timestamp = getTimestamp();
         }
 
-        //Reward = Staked Amount * Reward Rate * TimeDiff / RewardInterval
+        //Reward = Staked Amount * Reward Rate * TimeDiff(in Seconds) / RewardInterval
         uint256 totalReward = 0;
         uint256 count = stakeCounts[account];
         for (uint256 index = 0; index < count; index++) {
-            uint256 reward = (stakers[account][index].amount *
+            uint256 reward = ((stakers[account][index].amount *
                 REWARD_RATE *
-                (timestamp - stakers[account][index].timestamp)) /
-                (86400 * 365);
+                (timestamp - stakers[account][index].timestamp)) / 100 ) / 
+                (86400 * 365); 
             totalReward = totalReward + reward;
         }
 
