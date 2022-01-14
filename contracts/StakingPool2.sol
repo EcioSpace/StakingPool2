@@ -21,11 +21,11 @@ contract ECIOStakingPool1 is Ownable {
     /** 140,000,000 ECIO **/
     uint256 public constant TOTAL_ECIO_PER_POOL = 140000000000000000000000000;
 
-    /** 70,000,000 ECIO **/
-    uint256 public constant MAXIMUM_STAKING = 70000000000000000000000000;
+    /** 140,000,000 ECIO **/
+    uint256 public constant MAXIMUM_STAKING = 140000000000000000000000000;
 
-    /**  35,000 ECIO **/
-    uint256 public constant MINIMUM_STAKING = 35000000000000000000000;
+    /**  17,500 ECIO **/
+    uint256 public constant MINIMUM_STAKING = 17500000000000000000000;
 
     /** Ugent unstake fee (10%) **/
     uint256 public constant FEE = 1000;
