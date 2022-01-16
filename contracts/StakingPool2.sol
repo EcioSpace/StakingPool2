@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.2;
+pragma solidity ^0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// @author ECIO Engineering Team
 /// @title ECIO Staking Pool 1st Smart Contract
 
-contract ECIOStakingPool1 is Ownable {
+contract ECIOStakingPoolCaptain is Ownable {
     
     /** 140,000,000 ECIO **/
     uint256 public constant TOTAL_ECIO_PER_POOL = 140000000000000000000000000;
@@ -32,7 +32,9 @@ contract ECIOStakingPool1 is Ownable {
 
     /** Token lock time after unstaked*/
     uint256 public constant WITHDRAW_LOCK_DAY = 5;
-    uint256 public constant REWARD_RATE = 175;
+    
+    /** Reward Rate 150% */
+    uint256 public constant REWARD_RATE = 150;
 
     uint256 public endPool;
 
