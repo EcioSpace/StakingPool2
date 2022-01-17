@@ -16,25 +16,25 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// @author ECIO Engineering Team
 /// @title ECIO Staking Pool 1st Smart Contract
 
-contract ECIOStakingPoolCaptain is Ownable {
+contract ECIOStakingPoolCrewman is Ownable {
     
-    /** 140,000,000 ECIO **/
-    uint256 public constant TOTAL_ECIO_PER_POOL = 140000000000000000000000000;
+    /** 70,000,000 ECIO **/
+    uint256 public constant TOTAL_ECIO_PER_POOL = 70000000000000000000000000;
 
-    /** 140,000,000 ECIO **/
-    uint256 public constant MAXIMUM_STAKING = 140000000000000000000000000;
+    /** 70,000,000 ECIO **/
+    uint256 public constant MAXIMUM_STAKING = 70000000000000000000000000;
 
-    /**  17,500 ECIO **/
-    uint256 public constant MINIMUM_STAKING = 17500000000000000000000;
+    /**  5,000 ECIO **/
+    uint256 public constant MINIMUM_STAKING = 5000000000000000000000;
 
     /** Ugent unstake fee (10%) **/
     uint256 public constant FEE = 1000;
 
     /** Token lock time after unstaked*/
-    uint256 public constant WITHDRAW_LOCK_DAY = 5;
+    uint256 public constant WITHDRAW_LOCK_DAY = 3;
     
     /** Reward Rate 150% */
-    uint256 public constant REWARD_RATE = 150;
+    uint256 public constant REWARD_RATE = 100;
 
     uint256 public endPool;
 
