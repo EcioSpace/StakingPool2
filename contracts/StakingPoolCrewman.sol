@@ -276,6 +276,6 @@ contract ECIOStakingPoolCrewman is Ownable {
     function lock(uint256 amount, uint256 reward) internal {
         _lockedBalances[msg.sender] = amount;
         _lockedRewards[msg.sender] = reward;
-        _releaseTime[msg.sender] = getTimestamp() + 5 days;
+        _releaseTime[msg.sender] = getTimestamp() + 3 days;
     }
 }
