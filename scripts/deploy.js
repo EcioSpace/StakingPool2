@@ -19,7 +19,7 @@ async function main() {
 
   await ecioStakingPoolCrewman.deployed();
 
-  console.log("Greeter deployed to:", ecioStakingPoolCrewman.address);
+  console.log("Contracts deployed to:", ecioStakingPoolCrewman.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

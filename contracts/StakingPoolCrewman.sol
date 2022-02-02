@@ -197,7 +197,7 @@ contract ECIOStakingPoolCrewman is Ownable {
 
         uint256 reward = earned(msg.sender);
 
-        lock(balance, reward); // Lock 5 Days
+        lock(balance, reward); // Lock 3 Days
 
         claimedReward = claimedReward + reward;
 
@@ -224,7 +224,6 @@ contract ECIOStakingPoolCrewman is Ownable {
         //Transfer ECIO
         ecioToken.transfer(msg.sender, amount - fee);
         ecioToken.transfer(msg.sender, reward);
-        // ecioToken.transfer(address(this), fee); // this function is not needed
 
         totalFee = totalFee + fee;
 
