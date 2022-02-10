@@ -3,6 +3,7 @@ pragma solidity ^0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 //
 //     #######    #####     ##     #####
@@ -16,8 +17,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// @author ECIO Engineering Team
 /// @title ECIO Staking Pool 1st Smart Contract
 
-contract ECIOStakingPoolCrewman is Ownable {
-    
+contract ECIOWhiteListGolden is Ownable {
+    using Counters for Counters.Counter;
+
+    Counters.Counter private _userStakeCount;
+    Counters.Counter private _userUnstakeCount;
+
     /** 10,000,000 ECIO **/
     uint256 public constant TOTAL_ECIO_PER_POOL = 10000000000000000000000000;
 
@@ -27,12 +32,9 @@ contract ECIOStakingPoolCrewman is Ownable {
     /**  200,000 ECIO **/
     uint256 public constant MINIMUM_STAKING = 200000000000000000000000;
 
-    /** Ugent unstake fee (10%) **/
-    uint256 public constant FEE = 1000;
-
     /** Token lock time after unstaked*/
     uint256 public constant WITHDRAW_LOCK_DAY = 45;
-    
+
     /** Reward Rate 50% */
     uint256 public constant REWARD_RATE = 50;
 
@@ -45,26 +47,20 @@ contract ECIOStakingPoolCrewman is Ownable {
     struct Stake {
         uint256 amount;
         uint256 timestamp;
+        bool isClaimed;
     }
 
-    uint8 public userStakeCounts;
-    
-    mapping(address => Stake[]) public stakers;
+    mapping(address => Stake) public stakers;
     mapping(address => uint256) public balances;
     mapping(address => uint256) public stakeCounts;
-    mapping(address => uint256) private _lockedBalances;
-    mapping(address => uint256) private _lockedRewards;
     mapping(address => uint256) private _releaseTime;
-    
+    mapping(uint256 => address) private _stakerAddresses;
 
     /** Total reward are claimed */
     uint256 public claimedReward = 0;
 
     /** Total supply of the pool */
     uint256 public totalSupply;
-
-    /** Total ECIO fee that charge from ugent unstaking */
-    uint256 public totalFee;
 
     // uint256 private mockupTimestamp;
 
@@ -74,22 +70,10 @@ contract ECIOStakingPoolCrewman is Ownable {
     event StakeEvent(
         address indexed account,
         uint256 indexed timestamp,
-        uint256 amount
+        uint256 amount,
+        uint256 indexed _userStakeCount
     );
     event UnStakeEvent(
-        address indexed account,
-        uint256 indexed timestamp,
-        uint256 amount,
-        uint256 reward
-    );
-    event UnStakeNowEvent(
-        address indexed account,
-        uint256 indexed timestamp,
-        uint256 amount,
-        uint256 reward,
-        uint256 fee
-    );
-    event ClaimEvent(
         address indexed account,
         uint256 indexed timestamp,
         uint256 amount,
@@ -132,10 +116,9 @@ contract ECIOStakingPoolCrewman is Ownable {
         if (balances[_account] != 0) {
             return "STAKED";
         }
-
-        if (_lockedBalances[_account] != 0) {
-            return "WAITING";
-        }
+        // if (_lockedBalances[_account] != 0) {
+        //     return "WAITING";
+        // }
 
         return "NO STAKE";
     }
@@ -157,19 +140,10 @@ contract ECIOStakingPoolCrewman is Ownable {
     }
 
     function staked(address _account) public view returns (uint256) {
-        if (_lockedBalances[_account] != 0) {
-            return _lockedBalances[_account];
-        }
-
         return balances[_account];
     }
 
     function earned(address account) public view returns (uint256) {
-        
-        if (_lockedRewards[account] != 0) {
-            return _lockedRewards[account];
-        }
-
         uint256 timestamp;
         if (isPoolClose()) {
             timestamp = endPool;
@@ -178,106 +152,87 @@ contract ECIOStakingPoolCrewman is Ownable {
         }
 
         //Reward = Staked Amount * Reward Rate * TimeDiff(in Seconds) / RewardInterval
-        uint256 totalReward = 0;
-        uint256 count = stakeCounts[account];
-        for (uint256 index = 0; index < count; index++) {
-            uint256 reward = ((stakers[account][index].amount *
-                REWARD_RATE *
-                (timestamp - stakers[account][index].timestamp)) / 100 ) / 
-                (86400 * 365); 
-            totalReward = totalReward + reward;
-        }
+        uint256 reward = ((stakers[account].amount *
+            REWARD_RATE *
+            (timestamp - stakers[account].timestamp)) / 100) / (86400 * 365);
+        return reward;
+    }
 
-        return totalReward;
+    function getUserCount() public view returns (uint256) {
+        uint256 userCount = _userStakeCount.current() -
+            _userUnstakeCount.current();
+        return userCount;
+    }
+
+    function checkDuplicateUser(address account) public view returns (bool) {
+        uint256 userCount = _userStakeCount.current();
+        for (uint256 i = 0; i < userCount; i++) {
+            if (account != _stakerAddresses[i + 1]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /************************* SEND FUNC *****************************/
     function unStake() external {
-
         require(balances[msg.sender] != 0);
+        require(_releaseTime[msg.sender] != 0);
+        require(getTimestamp() >= _releaseTime[msg.sender]);
+        require(stakers[msg.sender].isClaimed == false);
 
         uint256 balance = balances[msg.sender];
-
         uint256 reward = earned(msg.sender);
 
-        lock(balance, reward); // Lock 3 Days
-
+        totalSupply = totalSupply - balance;
         claimedReward = claimedReward + reward;
 
-        totalSupply = totalSupply - balance;
+        //decrease
+        _userUnstakeCount.increment();
+
+        //Transfer ECIO
+        ecioToken.transfer(msg.sender, balance);
+        ecioToken.transfer(msg.sender, reward);
 
         //Clear balance
         delete stakers[msg.sender];
 
-        stakeCounts[msg.sender] = 0;
 
+        _releaseTime[msg.sender] = 0;
         balances[msg.sender] = 0;
 
         emit UnStakeEvent(msg.sender, getTimestamp(), balance, reward);
     }
 
-    function unStakeNow() external {
-        require(_lockedBalances[msg.sender] != 0);
-
-        uint256 amount = _lockedBalances[msg.sender];
-        uint256 reward = _lockedRewards[msg.sender];
-
-        uint256 fee = (amount * FEE) / 10000;
-
-        //Transfer ECIO
-        ecioToken.transfer(msg.sender, amount - fee);
-        ecioToken.transfer(msg.sender, reward);
-
-        totalFee = totalFee + fee;
-
-        _lockedBalances[msg.sender] = 0;
-        _lockedRewards[msg.sender] = 0;
-        _releaseTime[msg.sender] = 0;
-
-        emit UnStakeNowEvent(msg.sender, getTimestamp(), amount, reward, fee);
-    }
-
-    function claim() external {
-        require(_releaseTime[msg.sender] != 0);
-        require(_releaseTime[msg.sender] <= getTimestamp());
-        require(_lockedBalances[msg.sender] != 0);
-
-        uint256 amount = _lockedBalances[msg.sender];
-        uint256 reward = _lockedRewards[msg.sender];
-
-        //Transfer ECIO
-        ecioToken.transfer(msg.sender, amount);
-        ecioToken.transfer(msg.sender, reward);
-
-        _lockedBalances[msg.sender] = 0;
-        _lockedRewards[msg.sender] = 0;
-        _releaseTime[msg.sender] = 0;
-
-        emit ClaimEvent(msg.sender, getTimestamp(), amount, reward);
-    }
-
     function stake(uint256 amount) external {
-
         //validate
         uint256 ecioBalance = ecioToken.balanceOf(msg.sender);
         uint256 timestamp = getTimestamp();
+        uint256 userStakeCount = getUserCount();
+        bool checkDup = checkDuplicateUser(msg.sender);
+        
         require(!isPoolClose(), "Pool is closed");
         require(amount <= ecioBalance);
         require(totalSupply + amount <= MAXIMUM_STAKING);
         require(balances[msg.sender] + amount >= MINIMUM_STAKING);
+        require(userStakeCount <= 50);
+        require(checkDup = true);
+
+        // add address to mapping
+        uint256 currentUserId = _userStakeCount.current();
+        _stakerAddresses[currentUserId] = msg.sender;
 
         totalSupply = totalSupply + amount;
         balances[msg.sender] = balances[msg.sender] + amount;
-        stakers[msg.sender].push(Stake(amount, timestamp));
-        stakeCounts[msg.sender] = stakeCounts[msg.sender] + 1;
+        stakers[msg.sender] = (Stake(amount, timestamp, false));
         ecioToken.transferFrom(msg.sender, address(this), amount);
+        lock(msg.sender);
+        _userStakeCount.increment();
 
-        emit StakeEvent(msg.sender, timestamp, amount);
+        emit StakeEvent(msg.sender, timestamp, amount, getUserCount());
     }
 
-    function lock(uint256 amount, uint256 reward) internal {
-        _lockedBalances[msg.sender] = amount;
-        _lockedRewards[msg.sender] = reward;
-        _releaseTime[msg.sender] = getTimestamp() + 3 days;
+    function lock(address account) internal {
+        _releaseTime[account] = getTimestamp() + 45 days;
     }
 }

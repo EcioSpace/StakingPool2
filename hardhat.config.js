@@ -20,7 +20,7 @@ require("@nomiclabs/hardhat-etherscan");
 /* @type import('hardhat/config').HardhatUserConfig
 */
 module.exports = {
-defaultNetwork: "mainnet",
+defaultNetwork: "testnet",
 networks: {
 localhost: {
 url: "http://127.0.0.1:8545"
