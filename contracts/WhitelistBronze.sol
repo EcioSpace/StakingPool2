@@ -43,9 +43,7 @@ contract ECIOWhiteListBronze is Ownable {
 
     uint256 public endPool;
 
-    constructor() {
-        endPool = getTimestamp() + 365 days;
-    }
+    constructor() {}
 
     struct Stake {
         uint256 amount;
@@ -70,6 +68,7 @@ contract ECIOWhiteListBronze is Ownable {
     IERC20 ecioToken;
 
     /************************* EVENTS *****************************/
+    
     event StakeEvent(
         address indexed account,
         uint256 indexed timestamp,
@@ -92,10 +91,6 @@ contract ECIOWhiteListBronze is Ownable {
     //     mockupTimestamp = timestamp;
     // }
 
-    //start counting from 1;
-    function initial() public onlyOwner {
-        _userStakeCount.increment();
-    }
 
     function transfer(
         address _contractAddress,
@@ -152,12 +147,7 @@ contract ECIOWhiteListBronze is Ownable {
     }
 
     function earned(address account) public view returns (uint256) {
-        uint256 timestamp;
-        if (isPoolClose()) {
-            timestamp = endPool;
-        } else {
-            timestamp = getTimestamp();
-        }
+        uint256 timestamp = getTimestamp();
 
         //Reward = Staked Amount * Reward Rate * TimeDiff(in Seconds) / RewardInterval
         uint256 reward = ((stakers[account].amount *
@@ -219,12 +209,11 @@ contract ECIOWhiteListBronze is Ownable {
         uint256 userStakeCount = getUserCount();
         bool checkDup = checkDuplicateUser(msg.sender);
         
-        require(!isPoolClose(), "Pool is closed");
-        require(amount <= ecioBalance);
-        require(totalSupply + amount <= MAXIMUM_STAKING);
-        require(balances[msg.sender] + amount >= MINIMUM_STAKING);
-        require(userStakeCount <= LIMIT_USER);
-        require(checkDup = true);
+        require(amount <= ecioBalance, "Staking: your amount is not enough");
+        require(totalSupply + amount <= MAXIMUM_STAKING, "Staking: Staking amount has reached its limit.");
+        require(balances[msg.sender] + amount >= MINIMUM_STAKING, "Staking: Your amount has not reached minimum.");
+        require(userStakeCount <= LIMIT_USER, "Staking: Your amount has not reached minimum.");
+        require(checkDup = true, "Staking: You can't stake more than once");
 
         // add address to mapping
         uint256 currentUserId = _userStakeCount.current();
@@ -241,6 +230,6 @@ contract ECIOWhiteListBronze is Ownable {
     }
 
     function lock(address account) internal {
-        _releaseTime[account] = getTimestamp() + 5 minutes;
+        _releaseTime[account] = getTimestamp() + 1 minutes;
     }
 }
