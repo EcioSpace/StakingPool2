@@ -35,6 +35,9 @@ contract ECIOWhiteListGolden is Ownable {
     /** Token lock time after unstaked*/
     uint256 public constant WITHDRAW_LOCK_DAY = 45;
 
+    //**************** LIMIT USER FOR THIS POOL *******************/
+    uint256 public constant LIMIT_USER = 50 - 1;
+
     /** Reward Rate 50% */
     uint256 public constant REWARD_RATE = 50;
 
@@ -88,6 +91,11 @@ contract ECIOWhiteListGolden is Ownable {
     // function setMockupTimestamp(uint256 timestamp) public onlyOwner {
     //     mockupTimestamp = timestamp;
     // }
+
+    //start counting from 1;
+    function initial() public onlyOwner {
+        _userStakeCount.increment();
+    }
 
     function transfer(
         address _contractAddress,
@@ -167,7 +175,7 @@ contract ECIOWhiteListGolden is Ownable {
     function checkDuplicateUser(address account) public view returns (bool) {
         uint256 userCount = _userStakeCount.current();
         for (uint256 i = 0; i < userCount; i++) {
-            if (account != _stakerAddresses[i + 1]) {
+            if (account != _stakerAddresses[i]) {
                 return true;
             }
         }
@@ -215,7 +223,7 @@ contract ECIOWhiteListGolden is Ownable {
         require(amount <= ecioBalance);
         require(totalSupply + amount <= MAXIMUM_STAKING);
         require(balances[msg.sender] + amount >= MINIMUM_STAKING);
-        require(userStakeCount <= 50);
+        require(userStakeCount <= LIMIT_USER);
         require(checkDup = true);
 
         // add address to mapping
@@ -233,6 +241,6 @@ contract ECIOWhiteListGolden is Ownable {
     }
 
     function lock(address account) internal {
-        _releaseTime[account] = getTimestamp() + 45 days;
+        _releaseTime[account] = getTimestamp() + 5 minutes;
     }
 }
