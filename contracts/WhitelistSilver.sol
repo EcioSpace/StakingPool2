@@ -23,11 +23,11 @@ contract ECIOWhiteListSilver is Ownable {
     Counters.Counter private _userStakeCount;
     Counters.Counter private _userUnstakeCount;
 
-    /** 10,000,000 ECIO **/
-    uint256 public constant TOTAL_ECIO_PER_POOL = 10000000000000000000000000;
+    /** 18,000,000 ECIO **/
+    uint256 public constant TOTAL_ECIO_PER_POOL = 18000000000000000000000000;
 
-    /** 10,000,000 ECIO **/
-    uint256 public constant MAXIMUM_STAKING = 10000000000000000000000000;
+    /** 45,000,000 ECIO **/
+    uint256 public constant MAXIMUM_STAKING = 45000000000000000000000000;
 
     /**  150,000 ECIO **/
     uint256 public constant MINIMUM_STAKING = 150000000000000000000000;
@@ -53,7 +53,6 @@ contract ECIOWhiteListSilver is Ownable {
 
     mapping(address => Stake) public stakers;
     mapping(address => uint256) public balances;
-    mapping(address => uint256) public stakeCounts;
     mapping(address => uint256) private _releaseTime;
     mapping(uint256 => address) private _stakerAddresses;
 
@@ -109,10 +108,6 @@ contract ECIOWhiteListSilver is Ownable {
         return block.timestamp;
     }
 
-    function isPoolClose() public view returns (bool) {
-        return (block.timestamp >= endPool);
-    }
-
     function status(address _account) public view returns (string memory) {
         if (balances[_account] != 0) {
             return "STAKED";
@@ -162,8 +157,8 @@ contract ECIOWhiteListSilver is Ownable {
 
     function checkDuplicateUser(address account) public view returns (bool) {
         uint256 userCount = _userStakeCount.current();
-        for (uint256 i = 0; i < userCount; i++) {
-            if (account != _stakerAddresses[i]) {
+        for (uint256 i = 0; i <= userCount; i++) {
+            if (account == _stakerAddresses[i]) {
                 return true;
             }
         }
@@ -193,7 +188,6 @@ contract ECIOWhiteListSilver is Ownable {
         //Clear balance
         delete stakers[msg.sender];
 
-
         _releaseTime[msg.sender] = 0;
         balances[msg.sender] = 0;
 
@@ -205,13 +199,24 @@ contract ECIOWhiteListSilver is Ownable {
         uint256 ecioBalance = ecioToken.balanceOf(msg.sender);
         uint256 timestamp = getTimestamp();
         uint256 userStakeCount = getUserCount();
-        bool checkDup = checkDuplicateUser(msg.sender);
-        
+
         require(amount <= ecioBalance, "Staking: your amount is not enough");
-        require(totalSupply + amount <= MAXIMUM_STAKING, "Staking: Staking amount has reached its limit.");
-        require(balances[msg.sender] + amount >= MINIMUM_STAKING, "Staking: Your amount has not reached minimum.");
-        require(userStakeCount <= LIMIT_USER, "Staking: Your amount has not reached minimum.");
-        require(checkDup = true, "Staking: You can't stake more than once");
+        require(
+            totalSupply + amount <= MAXIMUM_STAKING,
+            "Staking: Staking amount has reached its limit."
+        );
+        require(
+            balances[msg.sender] + amount >= MINIMUM_STAKING,
+            "Staking: Your amount has not reached minimum."
+        );
+        require(
+            userStakeCount <= LIMIT_USER,
+            "Staking: User has reached Maximum Number."
+        );
+        require(
+            checkDuplicateUser(msg.sender) == false,
+            "Staking: You can't stake more than once"
+        );
 
         // add address to mapping
         uint256 currentUserId = _userStakeCount.current();
@@ -228,6 +233,6 @@ contract ECIOWhiteListSilver is Ownable {
     }
 
     function lock(address account) internal {
-        _releaseTime[account] = getTimestamp() + 5 minutes;
+        _releaseTime[account] = getTimestamp() + 45 days;
     }
 }

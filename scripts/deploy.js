@@ -12,14 +12,19 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   // await hre.run('compile');
+  const names = ["ECIOWhiteListBronze", "ECIOWhiteListGolden", "ECIOWhiteListSilver"];
 
-  // We get the contract to deploy
-  const ECIOWhiteListBronze = await hre.ethers.getContractFactory("ECIOWhiteListBronze");
-  const ecioWhiteListBronze = await ECIOWhiteListBronze.deploy();
+  for (var i=0; i < names.length; i++) {
+    // We get the contract to deploy
+    const Contracts = await hre.ethers.getContractFactory(names[i]);
+    const contract = await Contracts.deploy();
 
-  await ecioWhiteListBronze.deployed();
+    await contract.deployed();
 
-  console.log("Contracts deployed to:", ecioWhiteListBronze.address);
+    console.log(names[i] + "deployed to:", contract.address);
+
+  }
+  
 }
 
 // We recommend this pattern to be able to use async/await everywhere
